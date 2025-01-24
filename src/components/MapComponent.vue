@@ -76,6 +76,7 @@
       });
   
       const SubDistrictsBoundary = new TileLayer({
+        title: 'Sub Districts',
         type: 'overlay',
         source: new TileWMS({
           url: 'http://192.168.17.37:8080/geoserver/Geo-Ganga/wms?',
