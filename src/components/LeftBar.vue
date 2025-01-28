@@ -1,94 +1,82 @@
 <template>
-<div class="LeftSideBar">
+    <div class="LeftSideBar">
+        <v-main style="--v-layout-top: 0px;">
+            <v-app-bar color="rgb(2, 42, 56)" height="140" elevation="0"></v-app-bar>
+            <v-navigation-drawer rail color="rgb(2, 42, 56)" location="right"></v-navigation-drawer>
     
-    <v-main style="--v-layout-top: 0px;">
-        <v-app-bar color="rgb(2, 42, 56)" height="140" elevation="0"></v-app-bar>
-        <v-navigation-drawer rail color="rgb(2, 42, 56)" location="right"></v-navigation-drawer>
-        <v-navigation-drawer rail color="rgb(2, 42, 56)">
-            <v-list>
-                <!-- Layers Button -->
-                <v-list-item class="cursor-pointer" @click="toggleDrawer">
-                    <v-icon style="color: wheat;">mdi-layers-triple</v-icon>
-                </v-list-item>
-            </v-list>
+            <v-navigation-drawer rail color="rgb(2, 42, 56)">
+                <v-list>
+                    <v-list-item @click="toggleDrawer" class="cursor-pointer">
+                        <v-list-item-title>
+                            <v-icon>mdi-compare</v-icon>
+                        </v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-navigation-drawer>
+        </v-main>
+    
+        <v-navigation-drawer v-model="drawer" temporary>
+            <v-card elevation="0">
+                <v-card-text>
+                    <v-title>
+                        <div class="text-h8 font-weight-bold">Left Side</div>
+                    </v-title>
+                    <v-select v-model="leftSelect" :items="months" label="Please Select a Layer" @change="validateSelection"></v-select>
+                    <v-title>
+                        <div class="text-h8 font-weight-bold">Right Side</div>
+                    </v-title>
+                    <v-select v-model="rightSelect" :items="months" label="Please Select a Layer" @change="validateSelection"></v-select>
+                    <v-btn  :disabled="!isBothSelected || showError" :color="comparisonStarted ? 'red' : 'green'" @click="toggleComparison">{{ comparisonStarted ? 'Disable Compare' : 'Compare' }} </v-btn>
+                    <div v-if="showError" style="font-size: 15px; color: red; margin-top: 20px;">Please Select Different Layers.</div>
+                </v-card-text>
+            </v-card>
         </v-navigation-drawer>
-    </v-main>
+    </div>
+    </template>
     
-    <v-navigation-drawer v-model="drawer" temporary>
-        <v-list>
-            <v-list-item>
-                <div class="text-h5" style="font-family: 'Poppins', sans-serif; font-weight:500; text-align: center;">Layers</div>
-            </v-list-item>
-            <v-divider :thickness="2" color="black"></v-divider>
-            <v-expansion-panels>
-                <v-expansion-panel elevation="0">
-                    <v-expansion-panel-title>Administrative Boundaries</v-expansion-panel-title>
-                    <v-expansion-panel-text>
-                        <!-- Boundary Layer Checkboxes -->
-                        <v-list-item v-for="(adminLayer, index) in adminLayers" :key="index">
-                            <v-checkbox color="primary" :label="adminLayer.name" v-model="adminLayer.visible" style="margin-top: -7px; margin-bottom: -38px; margin-left:-10px" @change="onAdminBoundaryVisibilityChange(adminLayer)"></v-checkbox>
-                        </v-list-item>
-                    </v-expansion-panel-text>
-                </v-expansion-panel>
-                <v-expansion-panel elevation="0">
-                    <v-expansion-panel-title>
-                        Project Boundaries
-                    </v-expansion-panel-title>
-                    <v-expansion-panel-text>
-                        <!-- Project Layer Checkboxes -->
-                        <v-list-item v-for="(projectLayer, index) in projectLayers" :key="index">
-                            <v-checkbox color="primary" :label="projectLayer.name" v-model="projectLayer.visible" style="margin-top: -7px; margin-bottom: -38px; margin-left:-10px" @change="onProjectBoundaryVisibilityChange(projectLayer)"></v-checkbox>
-                        </v-list-item>
-                    </v-expansion-panel-text>
-                </v-expansion-panel>
-            </v-expansion-panels>
-            <v-divider></v-divider>
-        </v-list>
-    </v-navigation-drawer>
-</div>
-</template>
-
-  
-  
-<script>
-import eventBus from '@/event-bus';
-
-export default {
-    name: 'LeftBar',
-    data: () => ({
-        drawer: false,
-        adminLayers: [{
-                name: 'India Boundary',
-                visible: true
+    <script>
+    import eventBus from '@/event-bus';
+    
+    export default {
+        name: 'LeftBar',
+        data: () => ({
+            drawer: false,
+            leftSelect: null,
+            rightSelect: null,
+            months: ["Evapotranspiration", "Precipitation"],
+            comparisonStarted: false, 
+        }),
+        computed: {
+            isBothSelected() {
+                return this.leftSelect && this.rightSelect;
             },
-
-        ],
-        projectLayers: [{
-            name: 'Ganga Basin',
-            visible: true
-        }, ],
-    }),
-    methods: {
-        toggleDrawer() {
-            this.drawer = !this.drawer;
+            showError() {
+                return this.leftSelect === this.rightSelect;
+            },
         },
-        onAdminBoundaryVisibilityChange(adminLayer) {
-            eventBus.emit('toggle-layer-visibility', {
-                name: adminLayer.name,
-                visible: adminLayer.visible,
-            });
+        methods: {
+            toggleDrawer() {
+                this.drawer = !this.drawer;
+            },
+            validateSelection() {
+                this.showError = this.leftSelect === this.rightSelect;
+            },
+            toggleComparison() {
+                if (!this.comparisonStarted) {
+                    if (!this.showError) {
+                        this.comparisonStarted = true;
+                        eventBus.emit("compare-layers", {left: this.leftSelect,right: this.rightSelect,});
+                    }
+                } else {
+                    this.comparisonStarted = false;
+                    eventBus.emit("remove-comparison");
+                }
+            },
         },
-        onProjectBoundaryVisibilityChange(projectLayer) {
-            eventBus.emit('toggle-layer-visibility', {
-                name: projectLayer.name,
-                visible: projectLayer.visible,
-            });
-        },
-    },
-};
-</script>
-  
-  
-<style scoped>
-/* No changes needed for styling */
-</style>
+    };
+    </script>
+    
+    <style scoped>
+    /* No changes needed for styling */
+    </style>
+    
