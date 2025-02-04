@@ -1,5 +1,5 @@
 <template>
-    <div id="map" ref="mapContainer" style="position: relative; width: 100%; height: 85vh;">
+    <div id="map" ref="mapContainer" style="position: relative; width: 100%; height: 85vh;"> 
     </div>
   </template>
   
@@ -10,13 +10,12 @@
   import OSM from "ol/source/OSM";
 import TileWMS from 'ol/source/TileWMS';
 import {get as getProjection} from 'ol/proj';
-import eventBus from "@/event-bus";
-  
+// import eventBus from "@/event-bus";
+
   export default {
     name: "MapComponent",
     data() {
       return {
-        map: null,
         layers: [],
       };
     },
@@ -40,7 +39,7 @@ import eventBus from "@/event-bus";
                 serverType: 'geoserver',
                 tileGrid: new TileWMS().getTileGridForProjection(getProjection('EPSG:4326')),
             }),
-            visible: false,
+            visible: true,
         });
 
         const preci = new TileLayer({
@@ -48,7 +47,7 @@ import eventBus from "@/event-bus";
             type: 'overlay',
             source: new TileWMS({
                 url: 'http://192.168.17.37:8080/geoserver/Geo-Ganga/wms?',
-                params: {'LAYERS': 'ERA5','TILED': true,'VERSION': '1.1.1',},
+                params: {'LAYERS': 'Chirps','TILED': true,'VERSION': '1.1.1',},
                 serverType: 'geoserver',
                 tileGrid: new TileWMS().getTileGridForProjection(getProjection('EPSG:4326')),
             }),
@@ -61,34 +60,8 @@ import eventBus from "@/event-bus";
             layers: [...this.baseMaps, ...this.rasterLayers],
             view: new View({projection: 'EPSG:4326',center: [82.0662, 26.2648],zoom: 6.5,minZoom: 6.5,maxZoom: 19,extent: [68.1, 6.46, 97.4, 37.09],}),
         });
-
-        eventBus.on("compare-layers", this.updateLayerVisibility);
-        eventBus.on("remove-comparison", this.resetLayers);
-    },
-    
-    methods: {
-        updateLayerVisibility({ left, right }) {
-            this.rasterLayers.forEach((layer) => {
-            layer.setVisible(layer.get("name") === left || layer.get("name") === right);
-      });
-    },
-    resetLayers() {
-      this.rasterLayers.forEach((layer) => {
-        layer.setVisible(false);
-      });
-    },
   },
-  beforeUnmount() {
-      eventBus.off("compare-layers", this.updateLayerVisibility);
-      eventBus.off("remove-comparison", this.resetLayers);
-    },
 };
+
   </script>
-  
-  
-<style scoped>
-
-</style>
-
-
   
